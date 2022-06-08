@@ -1,6 +1,3 @@
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -20,24 +17,22 @@ object Lox {
 
 	fun runFile(filename: String) {
 		val bytes = Files.readAllBytes(Paths.get(filename))
-		run(String(bytes, Charset.defaultCharset()))
+		run(bytes.toString())
 
 		if (hadError) exitProcess(65)
 	}
 
 	fun runPrompt() {
-		val input = InputStreamReader(System.`in`)
-		val reader = BufferedReader(input)
-
+		//TODO: Newlines don't work. But, I might not want them anyways
 		while (true) {
-			println("> ")
-			val line = reader.readLine() ?: break
+			print("> ")
+			val line = readlnOrNull() ?: break
 			run(line)
 			hadError = false
 		}
 	}
 
-	fun report(line: Int, where: String, message: String) {
+	private fun report(line: Int, where: String, message: String) {
 		System.err.println("[line $line] Error$where: $message")
 		hadError = true
 	}

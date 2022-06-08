@@ -55,16 +55,19 @@ class Scanner(private val source: String) {
 			'=' -> if (match('=')) addToken(EQUAL_EQUAL) else addToken(EQUAL)
 			'<' -> if (match('=')) addToken(LESS_EQUAL) else addToken(LESS)
 			'>' -> if (match('=')) addToken(GREATER_EQUAL) else addToken(GREATER)
-			'/' -> if (match('/')) { while (peek() != '\n' && !isAtEnd()) advance() } else addToken(SLASH)
+			'/' -> when {
+				match('/') -> { while (peek() != '\n' && !isAtEnd()) advance() }
+				match('*') -> comment()
+				else -> addToken(SLASH)
+			}
 			'"' -> string()
 			else -> {
 				if (isDigit(c)) number()
 				else if (isAlpha(c)) identifier()
-				else Lox.error(line, "Unexpected character")
+				else Lox.error(line, "Unexpected character: '$c'")
 			}
 		}
 	}
-
 
 	private fun isAlpha(c: Char): Boolean = c in 'a'..'z' || c in 'A'..'Z' || c == '_'
 
@@ -75,23 +78,35 @@ class Scanner(private val source: String) {
 	private fun identifier() {
 		while (isAlphaNumeric(peek())) advance()
 		val text = source.substring(start, current)
-		var type = keywords[text]
-		if (type == null) type = IDENTIFIER
+		val type = keywords[text] ?: IDENTIFIER
 		addToken(type)
+	}
+	private fun comment() {
+		var level = 1
+		while (level > 0 && !isAtEnd()) {
+			when {
+				peek() == '/' && peekNext() == '*' -> level++
+				peek() == '*' && peekNext() == '/' -> level--
+				peek() == '\n' -> line++
+			}
+			advance()
+		}
+		advance(2)
 	}
 
 	private fun number() {
-		while (isDigit(peek())) advance()
+		while (isDigit(peek()))
+			advance()
 
 		// Check for fractional part
 		if (peek() == '.' && isDigit(peekNext()))
 			advance()
 
-		while (isDigit(peek())) advance()
+		while (isDigit(peek()))
+			advance()
 
 		addToken(NUMBER, source.substring(start, current).toDouble())
 	}
-
 
 	private fun string() {
 		while (peek() != '"' && !isAtEnd()) {
@@ -103,38 +118,47 @@ class Scanner(private val source: String) {
 			Lox.error(line, "Unterminated string")
 			return
 		}
-
-		// closing "
 		advance()
-
 		addToken(STRING, source.substring(start + 1, current - 1))
 	}
 
 	/**
 	 * Retrieves the current character without advancing
 	 */
-	private fun peek(): Char = if (isAtEnd()) '\u0000' else source[current]
+	private fun peek(): Char {
+		return if (isAtEnd()) '\u0000' else source[current]
+	}
 
 	/**
 	 * Retrieves the next character without advancing
 	 */
-	private fun peekNext(): Char = if (current + 1 >= source.length) '\u0000' else source[current + 1]
+	private fun peekNext(): Char {
+		return if (current + 1 >= source.length) '\u0000' else source[current + 1]
+	}
 
-
-
-	private fun isAtEnd(): Boolean = current >= source.length
+	private fun isAtEnd(): Boolean {
+		return current >= source.length
+	}
 
 	/**
-	 * Advances until the expected character is found
+	 * Advances if the expected character is found
 	 */
 	private fun match(expected: Char): Boolean {
-		if (isAtEnd() && source[current] != expected) return false
+		if (isAtEnd() || source[current] != expected) return false
 
 		current++
 		return true
 	}
 
-	private fun advance(): Char = source[current++]
+	/*private fun advance(): Char {
+		return source[current]
+	}*/
+
+	private fun advance(by: Int = 1): Char {
+		val c = current
+		current += by
+		return source[c]
+	}
 
 	private fun addToken(type: TokenType, literal: Any? = null) {
 		tokens.add(Token(type, source.substring(start, current), literal, line))
