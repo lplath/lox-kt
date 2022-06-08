@@ -1,24 +1,26 @@
-import TokenType.*
+package lox
+
+import lox.TokenType.*
 
 class Scanner(private val source: String) {
 	companion object {
 		val keywords = hashMapOf(
-			"and"       to AND,
-			"class"     to CLASS,
-			"else"      to ELSE,
-			"false"     to FALSE,
-			"for"       to FOR,
-			"fun"       to FUN,
-			"if"        to IF,
-			"nil"       to NIL,
-			"or"        to OR,
-			"print"     to PRINT,
-			"return"    to RETURN,
-			"super"     to SUPER,
-			"this"      to THIS,
-			"true"      to TRUE,
-			"var"       to VAR,
-			"while"     to WHILE
+			"and" to AND,
+			"class" to CLASS,
+			"else" to ELSE,
+			"false" to FALSE,
+			"for" to FOR,
+			"fun" to FUN,
+			"if" to IF,
+			"nil" to NIL,
+			"or" to OR,
+			"print" to PRINT,
+			"return" to RETURN,
+			"super" to SUPER,
+			"this" to THIS,
+			"true" to TRUE,
+			"var" to VAR,
+			"while" to WHILE
 		)
 	}
 
@@ -55,16 +57,16 @@ class Scanner(private val source: String) {
 			'=' -> if (match('=')) addToken(EQUAL_EQUAL) else addToken(EQUAL)
 			'<' -> if (match('=')) addToken(LESS_EQUAL) else addToken(LESS)
 			'>' -> if (match('=')) addToken(GREATER_EQUAL) else addToken(GREATER)
+			'"' -> string()
 			'/' -> when {
 				match('/') -> { while (peek() != '\n' && !isAtEnd()) advance() }
 				match('*') -> comment()
 				else -> addToken(SLASH)
 			}
-			'"' -> string()
-			else -> {
-				if (isDigit(c)) number()
-				else if (isAlpha(c)) identifier()
-				else Lox.error(line, "Unexpected character: '$c'")
+			else -> when {
+				isDigit(c) -> number()
+				isAlpha(c) -> identifier()
+				else -> Lox.error(line, "Unexpected character: '$c'")
 			}
 		}
 	}
@@ -81,6 +83,7 @@ class Scanner(private val source: String) {
 		val type = keywords[text] ?: IDENTIFIER
 		addToken(type)
 	}
+
 	private fun comment() {
 		var level = 1
 		while (level > 0 && !isAtEnd()) {
@@ -95,15 +98,12 @@ class Scanner(private val source: String) {
 	}
 
 	private fun number() {
-		while (isDigit(peek()))
-			advance()
+		while (isDigit(peek())) advance()
 
 		// Check for fractional part
-		if (peek() == '.' && isDigit(peekNext()))
-			advance()
+		if (peek() == '.' && isDigit(peekNext())) advance()
 
-		while (isDigit(peek()))
-			advance()
+		while (isDigit(peek())) advance()
 
 		addToken(NUMBER, source.substring(start, current).toDouble())
 	}
@@ -149,10 +149,6 @@ class Scanner(private val source: String) {
 		current++
 		return true
 	}
-
-	/*private fun advance(): Char {
-		return source[current]
-	}*/
 
 	private fun advance(by: Int = 1): Char {
 		val c = current

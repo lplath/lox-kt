@@ -1,6 +1,7 @@
+import lox.Scanner
+import lox.TokenType
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 
 internal class ScannerTest {
 

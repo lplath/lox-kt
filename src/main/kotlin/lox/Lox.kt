@@ -1,3 +1,7 @@
+package lox
+
+import util.AstPrinter
+import util.RPNPrinter
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -9,10 +13,13 @@ object Lox {
 	private fun run(source: String) {
 		val scanner = Scanner(source)
 		val tokens = scanner.scanTokens()
+		val parser = Parser(tokens)
 
-		for (t in tokens) {
-			println(t)
-		}
+		val expr = parser.parse()
+
+		if (hadError) return
+
+		println(AstPrinter().print(expr))
 	}
 
 	fun runFile(filename: String) {
@@ -38,6 +45,14 @@ object Lox {
 	}
 
 	fun error(line: Int, message: String) = report(line, "", message)
+
+	fun error(token: Token, message: String) {
+		if (token.type == TokenType.EOF) {
+			report(token.line, " at end", message)
+		} else {
+			report(token.line, " at '${token.lexeme}'", message)
+		}
+	}
 }
 
 fun main(args: Array<String>) {
