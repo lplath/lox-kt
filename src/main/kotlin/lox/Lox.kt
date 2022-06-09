@@ -8,7 +8,10 @@ import kotlin.system.exitProcess
 
 
 object Lox {
+	val interpreter = Interpreter()
+
 	var hadError = false
+	var hadRunTimeError = false
 
 	private fun run(source: String) {
 		val scanner = Scanner(source)
@@ -19,7 +22,8 @@ object Lox {
 
 		if (hadError) return
 
-		println(AstPrinter().print(expr))
+		if (expr != null)
+			interpreter.interpret(expr)
 	}
 
 	fun runFile(filename: String) {
@@ -27,10 +31,10 @@ object Lox {
 		run(bytes.toString())
 
 		if (hadError) exitProcess(65)
+		if (hadRunTimeError) exitProcess(70)
 	}
 
 	fun runPrompt() {
-		//TODO: Newlines don't work. But, I might not want them anyways
 		while (true) {
 			print("> ")
 			val line = readlnOrNull() ?: break
@@ -52,6 +56,11 @@ object Lox {
 		} else {
 			report(token.line, " at '${token.lexeme}'", message)
 		}
+	}
+
+	fun runTimeError(error: RunTimeError) {
+		System.err.println("${error.message}\n[line ${error.token.line}]")
+		hadRunTimeError = true
 	}
 }
 

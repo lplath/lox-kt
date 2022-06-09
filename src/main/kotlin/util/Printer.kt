@@ -7,7 +7,7 @@ import lox.TokenType
 
 class AstPrinter : ExprVisitor<String> {
 	fun print(expr: Expr?): String {
-		return expr?.accept(this) ?: "[NULL]"
+		return expr?.accept(this) ?: "[empty]"
 	}
 
 	private fun parenthesize(name: String, vararg exprs: Expr): String {
@@ -40,7 +40,7 @@ class RPNPrinter {
 		is Expr.Binary -> "${print(e.left)} ${print(e.right)} ${e.operator.lexeme}"
 		is Expr.Literal -> e.value?.toString() ?: "nil"
 		is Expr.Grouping -> print(e.expression)
-		null -> "[NULL]"
+		null -> "[empty]"
 	}
 }
 

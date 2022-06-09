@@ -2,7 +2,7 @@ package lox
 
 import lox.TokenType.*
 
-class ParseError: RuntimeException()
+class ParseError : RuntimeException()
 
 class Parser(private val tokens: List<Token>) {
 	private var current = 0
@@ -46,11 +46,19 @@ class Parser(private val tokens: List<Token>) {
 		return tokens[current - 1]
 	}
 
+
 	private fun expression(): Expr {
+		// Can't have a binary operator at the beginning
+		if (match(STAR) || match(SLASH) || match(PLUS) || match(MINUS) || match(GREATER) ||
+			match(GREATER_EQUAL) || match(LESS) || match(LESS_EQUAL)) {
+			throw error(peek(), "Is not a valid binary expression.")
+		}
+
+
 		return equality()
 	}
 
-	// equality → comparison ( ( "!=" | "==" ) comparison )* ;
+	// equality → comparison ( ( "!=" | "==" ) comparison )*
 	private fun equality(): Expr {
 		var expr = comparison()
 
@@ -63,7 +71,7 @@ class Parser(private val tokens: List<Token>) {
 		return expr
 	}
 
-	// comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+	// comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )*
 	private fun comparison(): Expr {
 		var expr = term()
 
@@ -100,7 +108,7 @@ class Parser(private val tokens: List<Token>) {
 		return expr
 	}
 
-	// unary → ( "!" | "-" ) unary | primary ;
+	// unary → ( "!" | "-" ) unary | primary
 	private fun unary(): Expr {
 		if (match(BANG, MINUS)) {
 			val operator = previous()
@@ -110,7 +118,20 @@ class Parser(private val tokens: List<Token>) {
 		return primary()
 	}
 
-	// primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+	/*
+	// sequence → primary ("," primary )*
+	private fun sequence(): Expr {
+		var expr = primary()
+
+		// Assign the last expression
+		while (match(COMMA)) {
+			expr = primary()
+		}
+
+		return expr
+	}*/
+
+	// primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
 	private fun primary(): Expr {
 		return when {
 			match(FALSE) -> Expr.Literal(false)
@@ -137,6 +158,9 @@ class Parser(private val tokens: List<Token>) {
 		return ParseError()
 	}
 
+	/**
+	 * Advance until the end of an expression.
+	 */
 	private fun synchronize() {
 		advance()
 
@@ -145,7 +169,7 @@ class Parser(private val tokens: List<Token>) {
 		}
 
 		when (peek().type) {
-			CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN-> return
+			CLASS, FUN, VAR, FOR, IF, WHILE, PRINT, RETURN -> return
 		}
 
 		advance()

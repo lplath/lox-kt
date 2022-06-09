@@ -1,0 +1,16 @@
+conditional    → assignment | expression "?" assignment ":" assignment ;                * Added
+expression     → equality ;
+equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term           → factor ( ( "-" | "+" ) factor )* ;
+factor         → unary ( ( "/" | "*" ) unary )* ;
+unary          → ( "!" | "-" ) unary | sequence ;
+sequence       → primary ("," primary)*                                                 * Added
+primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+
+bottom: highest precedence
+
+
+
+1 + 2 * 3       -> 1 + (2 * 3)
+1 + 2, 3 + 4    -> 3 + 4
