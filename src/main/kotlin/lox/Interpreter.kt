@@ -4,14 +4,130 @@ import lox.TokenType.*
 
 class RunTimeError(val token: Token, message: String) : RuntimeException(message)
 
-class Interpreter : ExprVisitor<Any?> {
+class Interpreter {
 
-	fun interpret(expression: Expr) {
+	private var environment = Environment()
+
+	@Throws(RunTimeError::class)
+	fun interpret(statements: List<Stmt>): String? {
+		var result: String? = null
 		try {
-			val value = evaluate(expression)
-			println(stringify(value))
+
+			for (statement in statements) {
+				result = execute(statement) ?: result
+			}
 		} catch (error: RunTimeError) {
 			Lox.runTimeError(error)
+		}
+		return result
+	}
+
+	private fun evaluate(expr: Expr): Any? {
+		return when (expr) {
+			is Expr.Literal -> expr.value
+			is Expr.Unary -> {
+				val right = evaluate(expr.right)
+
+				return when (expr.operator.type) {
+					MINUS -> -parseDouble(expr.operator, right)
+					BANG -> !isTruthy(right)
+					else -> null
+				}
+			}
+			is Expr.Binary -> {
+				val left = evaluate(expr.left)
+				val right = evaluate(expr.right)
+
+				return when (expr.operator.type) {
+					GREATER -> parseDouble(expr.operator, left, right).first > parseDouble(expr.operator, left, right).second
+					GREATER_EQUAL -> parseDouble(expr.operator, left, right).first >= parseDouble(
+						expr.operator,
+						left,
+						right
+					).second
+					LESS -> parseDouble(expr.operator, left, right).first < parseDouble(expr.operator, left, right).second
+					LESS_EQUAL -> parseDouble(expr.operator, left, right).first <= parseDouble(
+						expr.operator,
+						left,
+						right
+					).second
+					EQUAL_EQUAL -> isEqual(left, right)
+					BANG_EQUAL -> !isEqual(left, right)
+					MINUS -> parseDouble(expr.operator, left, right).first - parseDouble(expr.operator, left, right).second
+					PLUS -> when {
+						left is Double && right is Double -> left + right
+						left is String && right is String -> left + right
+						left is String && right is Double -> left + stringify(right)
+						left is Double && right is String -> stringify(left) + right
+						else -> throw RunTimeError(expr.operator, "Operands must be two numbers or strings")
+					}
+					SLASH -> {
+						val (left, right) = parseDouble(expr.operator, left, right)
+						left > right
+						if (right == 0.0) throw RunTimeError(expr.operator, "Cannot divide by zero.")
+						else left / right
+					}
+					STAR -> parseDouble(expr.operator, left, right).first * parseDouble(expr.operator, left, right).second
+					else -> null
+				}
+			}
+			is Expr.Grouping -> evaluate(expr.expression)
+			is Expr.Logical -> {
+				val left = evaluate(expr.left)
+				when (expr.operator.type) {
+					OR -> if (isTruthy(left)) return left
+					AND -> if(!isTruthy(left)) return left
+					else -> {}
+				}
+				return evaluate(expr.right)
+			}
+			is Expr.Assign -> {
+				val value = evaluate(expr.value)
+				environment.assign(expr.name, value)
+				return value
+			}
+			is Expr.Variable -> {
+				val result = environment.get(expr.name)
+				if (result != null) return result
+				else throw RunTimeError(expr.name, "Variable '${expr.name.lexeme}' has not been initialized.")
+			}
+		}
+	}
+
+	private fun execute(stmt: Stmt): String? {
+		return when (stmt) {
+			is Stmt.Block -> {
+				val previous = this.environment
+				var result: String? = null
+				try {
+					this.environment = Environment(this.environment)
+					for (statement in stmt.statements)
+						result = execute(statement) ?: result
+				} finally {
+					this.environment = previous
+				}
+
+				return result
+			}
+			is Stmt.If -> {
+				if (isTruthy(stmt.condition)) {
+					execute(stmt.thenBranch)
+				} else if (stmt.elseBranch != null) {
+					execute(stmt.elseBranch)
+				}
+				return null
+			}
+			is Stmt.Var -> {
+				val value = if (stmt.initializer != null) evaluate(stmt.initializer) else null
+				environment.define(stmt.name.lexeme, value)
+				return null
+			}
+			is Stmt.Print -> {
+				val value = evaluate(stmt.expression)
+				println(stringify(value))
+				return null
+			}
+			is Stmt.Expression -> stringify(evaluate(stmt.expression))
 		}
 	}
 
@@ -26,59 +142,6 @@ class Interpreter : ExprVisitor<Any?> {
 			}
 			else -> obj.toString()
 		}
-	}
-
-	override fun visit(exp: Expr.Unary): Any? {
-		val right = evaluate(exp.right)
-
-		return when (exp.operator.type) {
-			MINUS -> -parseDouble(exp.operator, right)
-			BANG -> !isTruthy(right)
-			else -> null
-		}
-	}
-
-	override fun visit(exp: Expr.Binary): Any? {
-		val left = evaluate(exp.left)
-		val right = evaluate(exp.right)
-
-		return when (exp.operator.type) {
-			GREATER -> parseDouble(exp.operator, left, right).first > parseDouble(exp.operator, left, right).second
-			GREATER_EQUAL -> parseDouble(exp.operator, left, right).first >= parseDouble(exp.operator, left, right).second
-			LESS -> parseDouble(exp.operator, left, right).first < parseDouble(exp.operator, left, right).second
-			LESS_EQUAL -> parseDouble(exp.operator, left, right).first <= parseDouble(exp.operator, left, right).second
-			EQUAL_EQUAL -> isEqual(left, right)
-			BANG_EQUAL -> !isEqual(left, right)
-			MINUS -> parseDouble(exp.operator, left, right).first - parseDouble(exp.operator, left, right).second
-			PLUS -> when {
-				left is Double && right is Double -> left + right
-				left is String && right is String -> left + right
-				left is String && right is Double -> left + stringify(right)
-				left is Double && right is String -> stringify(left) + right
-				else -> throw RunTimeError(exp.operator, "Operands must be two numbers or strings")
-			}
-			SLASH -> {
-				val (left, right) = parseDouble(exp.operator, left, right)
-				left > right
-				if (right == 0.0) throw RunTimeError(exp.operator, "Cannot divide by zero.")
-				else left / right
-			}
-			STAR -> parseDouble(exp.operator, left, right).first * parseDouble(exp.operator, left, right).second
-			else -> null
-		}
-	}
-
-
-	override fun visit(exp: Expr.Grouping): Any? {
-		return evaluate(exp.expression)
-	}
-
-	override fun visit(exp: Expr.Literal): Any? {
-		return exp.value
-	}
-
-	private fun evaluate(exp: Expr): Any? {
-		return exp.accept(this)
 	}
 
 	@Throws(RunTimeError::class)

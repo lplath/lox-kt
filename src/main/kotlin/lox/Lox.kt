@@ -1,29 +1,26 @@
 package lox
 
-import util.AstPrinter
-import util.RPNPrinter
+import util.Console
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 
 object Lox {
-	val interpreter = Interpreter()
+	private val interpreter = Interpreter()
 
-	var hadError = false
-	var hadRunTimeError = false
+	private var hadError = false
+	private var hadRunTimeError = false
 
-	private fun run(source: String) {
+	private fun run(source: String): String? {
 		val scanner = Scanner(source)
 		val tokens = scanner.scanTokens()
 		val parser = Parser(tokens)
+		val statements = parser.parse()
 
-		val expr = parser.parse()
+		if (hadError) return null
 
-		if (hadError) return
-
-		if (expr != null)
-			interpreter.interpret(expr)
+		return interpreter.interpret(statements)
 	}
 
 	fun runFile(filename: String) {
@@ -38,13 +35,16 @@ object Lox {
 		while (true) {
 			print("> ")
 			val line = readlnOrNull() ?: break
-			run(line)
+			val result = run(line)
+
+			if (result != null) Console.printResult(result)
+
 			hadError = false
 		}
 	}
 
 	private fun report(line: Int, where: String, message: String) {
-		System.err.println("[line $line] Error$where: $message")
+		Console.printErr("Invalid Code on line $line. $message")
 		hadError = true
 	}
 
@@ -59,7 +59,7 @@ object Lox {
 	}
 
 	fun runTimeError(error: RunTimeError) {
-		System.err.println("${error.message}\n[line ${error.token.line}]")
+		Console.printErr("Runtime Error on line ${error.token.line}. ${error.message}")
 		hadRunTimeError = true
 	}
 }
