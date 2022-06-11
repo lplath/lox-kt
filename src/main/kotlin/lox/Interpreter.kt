@@ -1,12 +1,17 @@
 package lox
 
+import java.util.ArrayDeque
 import lox.TokenType.*
 
 class RunTimeError(val token: Token, message: String) : RuntimeException(message)
 
 class Interpreter {
 
-	private var environment = Environment()
+	private val env = ArrayDeque<Environment>()
+
+	init {
+		env.add(Environment())
+	}
 
 	@Throws(RunTimeError::class)
 	fun interpret(statements: List<Stmt>): String? {
@@ -22,6 +27,7 @@ class Interpreter {
 		return result
 	}
 
+	@Throws(RunTimeError::class)
 	private fun evaluate(expr: Expr): Any? {
 		return when (expr) {
 			is Expr.Literal -> expr.value
@@ -83,11 +89,12 @@ class Interpreter {
 			}
 			is Expr.Assign -> {
 				val value = evaluate(expr.value)
-				environment.assign(expr.name, value)
+				env.peek().assign(expr.name, value)
+				env
 				return value
 			}
 			is Expr.Variable -> {
-				val result = environment.get(expr.name)
+				val result = env.peek().get(expr.name)
 				if (result != null) return result
 				else throw RunTimeError(expr.name, "Variable '${expr.name.lexeme}' has not been initialized.")
 			}
@@ -97,16 +104,15 @@ class Interpreter {
 	private fun execute(stmt: Stmt): String? {
 		return when (stmt) {
 			is Stmt.Block -> {
-				val previous = this.environment
 				var result: String? = null
 				try {
-					this.environment = Environment(this.environment)
-					for (statement in stmt.statements)
+					env.push(Environment(this.env.peek()))
+					for (statement in stmt.statements) {
 						result = execute(statement) ?: result
+					}
 				} finally {
-					this.environment = previous
+					this.env.pop()
 				}
-
 				return result
 			}
 			is Stmt.If -> {
@@ -119,7 +125,7 @@ class Interpreter {
 			}
 			is Stmt.Var -> {
 				val value = if (stmt.initializer != null) evaluate(stmt.initializer) else null
-				environment.define(stmt.name.lexeme, value)
+				env.peek().define(stmt.name.lexeme, value)
 				return null
 			}
 			is Stmt.Print -> {

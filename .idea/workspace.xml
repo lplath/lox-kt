@@ -4,17 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="df6732d6-4a6e-4522-98c4-36c19170b9f5" name="Changes" comment="Automatically printing REPL response.">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Environment.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Stmt.kt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/util/Console.kt" afterDir="false" />
+    <list default="true" id="df6732d6-4a6e-4522-98c4-36c19170b9f5" name="Changes" comment="Removing visitor-pattern.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/challenges/grammar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/lox/Expr.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Expr.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/lox/Interpreter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Interpreter.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/lox/Lox.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Lox.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/lox/Parser.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/lox/Parser.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/util/Printer.kt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +154,14 @@
       <option name="project" value="LOCAL" />
       <updated>1654770488232</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Removing visitor-pattern.">
+      <created>1654963421804</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1654963421804</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -184,6 +183,7 @@
     <MESSAGE value="Working Parser" />
     <MESSAGE value="Working Interpreter" />
     <MESSAGE value="Automatically printing REPL response." />
-    <option name="LAST_COMMIT_MESSAGE" value="Automatically printing REPL response." />
+    <MESSAGE value="Removing visitor-pattern." />
+    <option name="LAST_COMMIT_MESSAGE" value="Removing visitor-pattern." />
   </component>
 </project>
